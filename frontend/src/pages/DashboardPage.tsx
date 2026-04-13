@@ -2,7 +2,6 @@
 // Protected route — redirects to /login if not authenticated
 // Displays "Dashboard coming soon." as specified in the spec
 
-import React from "react";
 import { logoutStudent } from "../api/auth";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";

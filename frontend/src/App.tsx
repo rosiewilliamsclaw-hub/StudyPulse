@@ -1,6 +1,5 @@
 // App root — sets up routing and wraps everything in AuthProvider
 
-import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
