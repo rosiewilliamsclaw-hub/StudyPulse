@@ -130,8 +130,8 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",  // Required for cross-origin cookie sending (Render backend → Vercel frontend)
       maxAge: JWT_EXPIRY_SECONDS * 1000,
     });
 
@@ -151,8 +151,8 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
 router.post("/logout", (_req: Request, res: Response): void => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",  // Must match the cookie set in login (required for cross-origin)
   });
   res.status(200).json({ message: "Logged out successfully." });
 });

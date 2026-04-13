@@ -1,5 +1,5 @@
 // StudyPulse Backend — Entry Point
-// Express server with JWT cookie auth, auth routes, and onboarding route
+// Express server with JWT cookie auth, auth routes, onboarding, study design extraction, and question generation
 
 import express from "express";
 import cors from "cors";
@@ -10,6 +10,7 @@ import { ensureDataDir } from "./utils/fileStore";
 import authRouter from "./routes/auth";
 import onboardingRouter from "./routes/onboarding";
 import extractStudyDesignRouter from "./routes/extractStudyDesign";
+import generateQuestionRouter from "./routes/generateQuestion";
 
 // Use __dirname to anchor .env path — process.cwd() is unreliable on Render
 // (resolves to repo root, not backend/ subdirectory)
@@ -43,6 +44,7 @@ app.use(cookieParser());
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/onboarding", onboardingRouter);
 app.use("/api/v1/extract-study-design", extractStudyDesignRouter);
+app.use("/api/v1/generate-question", generateQuestionRouter);
 
 // Health check
 app.get("/api/v1/health", (_req, res) => {
