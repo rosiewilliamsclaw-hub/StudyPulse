@@ -10,8 +10,9 @@ import { ensureDataDir } from "./utils/fileStore";
 import authRouter from "./routes/auth";
 import onboardingRouter from "./routes/onboarding";
 
-// Load environment variables from .env at project root
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+// Use __dirname to anchor .env path — process.cwd() is unreliable on Render
+// (resolves to repo root, not backend/ subdirectory)
+dotenv.config({ path: path.resolve(__dirname, "..", "..", ".env") });
 
 // Validate required env vars at startup
 if (!process.env.JWT_SECRET) {
@@ -25,22 +26,11 @@ ensureDataDir();
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-// CORS — allow requests from the frontend origin (Vercel or localhost dev)
-const allowedOrigins = [
-  "http://localhost:5173",
-  // Production Vercel URL — set FRONTEND_URL env var in Render dashboard once deployed
-  process.env.FRONTEND_URL,
-].filter(Boolean) as string[];
-
+// CORS — permissive for now (early dev/demo mode); tighten before production launch
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. server-to-server, curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error(`CORS: origin ${origin} not allowed`));
-    },
-    credentials: true, // Required for HTTP-only cookies to be sent cross-origin
+    origin: true,       // allow all origins
+    credentials: true,  // required for HTTP-only cookies to be sent cross-origin
   })
 );
 
