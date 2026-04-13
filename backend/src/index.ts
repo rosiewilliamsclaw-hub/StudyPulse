@@ -9,6 +9,7 @@ import path from "path";
 import { ensureDataDir } from "./utils/fileStore";
 import authRouter from "./routes/auth";
 import onboardingRouter from "./routes/onboarding";
+import extractStudyDesignRouter from "./routes/extractStudyDesign";
 
 // Use __dirname to anchor .env path — process.cwd() is unreliable on Render
 // (resolves to repo root, not backend/ subdirectory)
@@ -41,6 +42,7 @@ app.use(cookieParser());
 // Routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/onboarding", onboardingRouter);
+app.use("/api/v1/extract-study-design", extractStudyDesignRouter);
 
 // Health check
 app.get("/api/v1/health", (_req, res) => {
