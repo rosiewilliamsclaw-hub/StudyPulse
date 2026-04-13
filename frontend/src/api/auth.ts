@@ -1,7 +1,8 @@
 // Auth API client functions
-// All requests go to /api/v1/auth/* (proxied to backend via Vite config)
+// In development: VITE_API_URL is undefined → uses relative /api (proxied to backend via Vite)
+// In production: VITE_API_URL is set to the Render backend URL in .env.production
 
-const BASE = "/api/v1";
+const BASE = `${import.meta.env.VITE_API_URL ?? ""}/api/v1`;
 
 export interface ApiError {
   error: string;
@@ -18,6 +19,7 @@ export async function registerStudent(
   const res = await fetch(`${BASE}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ email, password }),
   });
   if (res.ok) return null;
@@ -37,8 +39,8 @@ export async function loginStudent(
   const res = await fetch(`${BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
     credentials: "include",
+    body: JSON.stringify({ email, password }),
   });
   const data = await res.json();
   if (!res.ok) {
@@ -81,8 +83,8 @@ export async function submitOnboarding(data: {
   const res = await fetch(`${BASE}/onboarding`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
     credentials: "include",
+    body: JSON.stringify(data),
   });
   if (res.ok) return null;
   const body: ApiError = await res.json();
