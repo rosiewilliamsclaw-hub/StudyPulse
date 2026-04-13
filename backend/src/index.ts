@@ -2,6 +2,7 @@
 // Express server with JWT cookie auth, auth routes, and onboarding route
 
 import express from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import path from "path";
@@ -23,6 +24,25 @@ ensureDataDir();
 
 const app = express();
 const PORT = process.env.PORT ?? 3001;
+
+// CORS — allow requests from the frontend origin (Vercel or localhost dev)
+const allowedOrigins = [
+  "http://localhost:5173",
+  // Production Vercel URL — set FRONTEND_URL env var in Render dashboard once deployed
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. server-to-server, curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true, // Required for HTTP-only cookies to be sent cross-origin
+  })
+);
 
 // Middleware
 app.use(express.json());

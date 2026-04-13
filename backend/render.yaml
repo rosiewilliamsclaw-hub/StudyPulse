@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: studypulse-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: JWT_SECRET
+        sync: false  # Must be set manually in Render dashboard
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001

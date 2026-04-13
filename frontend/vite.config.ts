@@ -1,8 +1,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Proxy /api/* requests to the backend during development
-// This keeps the frontend unaware of the backend port and avoids CORS issues
+// In development: proxy /api/* to local backend (avoids CORS + cookie issues)
+// In production: Vercel rewrites handle /api/* → Render backend (see vercel.json)
 export default defineConfig({
   plugins: [react()],
   server: {
