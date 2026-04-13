@@ -13,7 +13,7 @@ import extractStudyDesignRouter from "./routes/extractStudyDesign";
 
 // Use __dirname to anchor .env path — process.cwd() is unreliable on Render
 // (resolves to repo root, not backend/ subdirectory)
-dotenv.config({ path: path.resolve(__dirname, "..", "..", ".env") });
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
 // Validate required env vars at startup
 if (!process.env.JWT_SECRET) {
