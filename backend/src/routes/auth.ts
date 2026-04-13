@@ -82,7 +82,11 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
 
     res.status(201).json({ message: "Account created successfully." });
   } catch (err) {
-    console.error("Registration error:", err);
+    // Log full error detail so it's visible in Render logs
+    console.error("[register] Unexpected error:", err);
+    if (err instanceof Error) {
+      console.error("[register] Stack:", err.stack);
+    }
     res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 });

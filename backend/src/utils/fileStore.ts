@@ -5,20 +5,33 @@ import fs from "fs";
 import path from "path";
 import { StudentFile, EmailIndex } from "../types/student";
 
-const DATA_DIR = path.resolve(process.cwd(), "data", "students");
+// Use __dirname (resolves to dist/utils/ after build) to anchor the data path
+// reliably regardless of what process.cwd() is on the host (e.g. Render sets
+// cwd to the repo root, not the backend subdirectory).
+// /data/students/ sits two levels above dist/utils/ → backend/data/students/
+const DATA_DIR = path.resolve(__dirname, "..", "..", "data", "students");
 const EMAIL_INDEX_PATH = path.join(DATA_DIR, "_email_index.json");
 
+console.log(`[fileStore] DATA_DIR resolved to: ${DATA_DIR}`);
+
 /**
- * Ensures /data/students/ exists. Called once at server startup.
+ * Ensures /data/ and /data/students/ exist recursively.
+ * Called once at server startup before any routes are registered.
  */
 export function ensureDataDir(): void {
-  if (!fs.existsSync(DATA_DIR)) {
+  try {
     fs.mkdirSync(DATA_DIR, { recursive: true });
-    console.log(`Created data directory: ${DATA_DIR}`);
+    console.log(`[fileStore] Data directory ready: ${DATA_DIR}`);
+  } catch (err) {
+    // mkdirSync with recursive:true only throws on genuine errors (e.g. permissions)
+    console.error(`[fileStore] FATAL: Could not create data directory: ${DATA_DIR}`, err);
+    process.exit(1);
   }
+
   // Ensure email index exists
   if (!fs.existsSync(EMAIL_INDEX_PATH)) {
     atomicWrite(EMAIL_INDEX_PATH, {});
+    console.log(`[fileStore] Created empty email index at: ${EMAIL_INDEX_PATH}`);
   }
 }
 
