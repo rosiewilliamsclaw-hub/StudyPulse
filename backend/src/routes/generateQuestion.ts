@@ -72,7 +72,7 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
     // Attempt 1 failed audit — prepare for attempt 2
     const auditIssues =
       auditResult.verdict === "REVISION_NEEDED"
-        ? (auditResult as { verdict: "REVISION_NEEDED"; issues: string[] }).issues
+        ? (((auditResult as any).issues ?? []) as string[])
         : [];
     console.log(
       `[generateQuestion route] Attempt 1 failed audit. Issues: ${auditIssues.join(", ")}`
@@ -105,7 +105,7 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
       // Second attempt still failed — return with audit_warning
       const issues =
         auditResult.verdict === "REVISION_NEEDED"
-          ? (auditResult as { verdict: "REVISION_NEEDED"; issues: string[] }).issues
+          ? (((auditResult as any).issues ?? []) as string[])
           : [];
       console.error(
         `[generateQuestion route] Attempt 2 also failed audit. Returning with warning. Issues: ${issues.join(", ")}`
