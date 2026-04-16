@@ -6,7 +6,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
-import DashboardPage from "./pages/DashboardPage";
+import QuestionPage from "./pages/QuestionPage";
 
 export default function App() {
   return (
@@ -27,13 +27,15 @@ export default function App() {
             }
           />
           <Route
-            path="/dashboard"
+            path="/question"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <QuestionPage />
               </ProtectedRoute>
             }
           />
+          {/* Dashboard redirects to question */}
+          <Route path="/dashboard" element={<Navigate to="/question" replace />} />
 
           {/* Default: redirect to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
