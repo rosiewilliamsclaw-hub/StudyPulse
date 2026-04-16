@@ -113,12 +113,14 @@ function extractUnitNumber(unitStr: string): number {
  *
  * @param studentId - The student ID
  * @param topic - Optional explicit topic; if not provided, auto-selects weakest
+ * @param auditContext - Optional array of audit issues from a previous failed attempt
  * @returns Full Question object (including hidden fields)
  * @throws QuestionResearcherError with typed code on all failure conditions
  */
 export async function generateQuestion(
   studentId: string,
-  topic?: string | null
+  topic?: string | null,
+  auditContext?: string[]
 ): Promise<Question> {
   // --- 1. Load student data ---
   const student = readStudent(studentId);
@@ -202,7 +204,7 @@ export async function generateQuestion(
     );
   }
 
-  const userMessage = `Student subject: ${subject}
+  let userMessage = `Student subject: ${subject}
 Unit: ${unit}
 Topic: ${selectedTopic}
 
@@ -210,6 +212,15 @@ Study Design Content:
 ${JSON.stringify(studyDesignContent, null, 2)}
 
 Generate a VCAA-format practice question for this topic.`;
+
+  // If this is a revision attempt (auditContext provided), append issues
+  if (auditContext && auditContext.length > 0) {
+    userMessage += `
+
+Previous attempt failed quality audit. Issues to fix:
+${auditContext.map((issue) => `- ${issue}`).join("\n")}
+Please address all issues in this new attempt.`;
+  }
 
   const client = new Anthropic({ apiKey });
 

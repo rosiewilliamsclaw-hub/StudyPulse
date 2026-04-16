@@ -1,14 +1,27 @@
 // POST /api/v1/generate-question
 //
 // Protected: requires valid JWT cookie
-// Generates a VCAA-format practice question for a student on their weakest topic.
-// Delegates all business logic to the generateQuestion() helper.
-// Responsible only for HTTP request validation, auth, and error-to-status-code mapping.
+// Generates a VCAA-format practice question for a student, with quality audit.
+// Implements two-attempt audit loop:
+// - Attempt 1: Generate question, audit it
+// - If approved: return public question
+// - If revision needed: Attempt 2: Generate with audit context, audit it again
+// - If still needed: return with audit_warning flag
+//
+// Delegates question generation to generateQuestion() helper.
+// Delegates audit to auditQuestion() helper.
+// Responsible for orchestrating the loop, validation, error mapping, and response formatting.
 
 import { Router, Request, Response } from "express";
 import { requireAuth } from "../middleware/authMiddleware";
 import { generateQuestion, stripHiddenFields } from "../agents/questionResearcher";
-import { QuestionResearcherError, isQuestionResearcherError } from "../types/question";
+import { auditQuestion } from "../agents/auditor";
+import {
+  QuestionResearcherError,
+  isQuestionResearcherError,
+  AuditorError,
+  type PublicQuestion,
+} from "../types/question";
 
 const router = Router();
 
@@ -29,15 +42,80 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
     return;
   }
 
+  const trimmedStudentId = student_id.trim();
+
   try {
-    // Call the helper function
-    // It returns the full question (including hidden fields)
-    const fullQuestion = await generateQuestion(student_id.trim(), topic);
+    // --- ATTEMPT 1: Generate and audit ---
+    console.log(`[generateQuestion route] Attempt 1 for student ${trimmedStudentId}`);
+    let question = await generateQuestion(trimmedStudentId, topic);
 
-    // Strip hidden fields before returning to the student
-    const publicQuestion = stripHiddenFields(fullQuestion);
+    let auditResult;
+    try {
+      auditResult = await auditQuestion(question);
+    } catch (auditErr) {
+      // If audit infrastructure fails, log and treat as approved (fail-open)
+      if (auditErr instanceof AuditorError) {
+        console.error(`[generateQuestion route] Audit error (failing open): ${auditErr.message}`);
+        auditResult = { verdict: "APPROVED" };
+      } else {
+        throw auditErr;
+      }
+    }
 
-    res.status(200).json(publicQuestion);
+    if (auditResult.verdict === "APPROVED") {
+      // First attempt approved — return to student
+      const publicQuestion = stripHiddenFields(question);
+      res.status(200).json(publicQuestion);
+      return;
+    }
+
+    // Attempt 1 failed audit — prepare for attempt 2
+    const auditIssues =
+      auditResult.verdict === "REVISION_NEEDED"
+        ? (auditResult as { verdict: "REVISION_NEEDED"; issues: string[] }).issues
+        : [];
+    console.log(
+      `[generateQuestion route] Attempt 1 failed audit. Issues: ${auditIssues.join(", ")}`
+    );
+
+    // --- ATTEMPT 2: Regenerate with audit context and audit again ---
+    console.log(`[generateQuestion route] Attempt 2 for student ${trimmedStudentId} with audit context`);
+    question = await generateQuestion(trimmedStudentId, topic, auditIssues);
+
+    try {
+      auditResult = await auditQuestion(question);
+    } catch (auditErr) {
+      // If audit infrastructure fails on attempt 2, log and treat as approved (fail-open)
+      if (auditErr instanceof AuditorError) {
+        console.error(`[generateQuestion route] Audit error on attempt 2 (failing open): ${auditErr.message}`);
+        auditResult = { verdict: "APPROVED" };
+      } else {
+        throw auditErr;
+      }
+    }
+
+    // Return the second attempt result
+    const publicQuestion = stripHiddenFields(question);
+
+    if (auditResult.verdict === "APPROVED") {
+      // Second attempt approved
+      console.log(`[generateQuestion route] Attempt 2 approved`);
+      res.status(200).json(publicQuestion);
+    } else {
+      // Second attempt still failed — return with audit_warning
+      const issues =
+        auditResult.verdict === "REVISION_NEEDED"
+          ? (auditResult as { verdict: "REVISION_NEEDED"; issues: string[] }).issues
+          : [];
+      console.error(
+        `[generateQuestion route] Attempt 2 also failed audit. Returning with warning. Issues: ${issues.join(", ")}`
+      );
+      const responseWithWarning: PublicQuestion = {
+        ...publicQuestion,
+        audit_warning: true,
+      };
+      res.status(200).json(responseWithWarning);
+    }
   } catch (err) {
     if (isQuestionResearcherError(err)) {
       // Map typed error codes to appropriate HTTP status codes

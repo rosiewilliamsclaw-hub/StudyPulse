@@ -16,7 +16,10 @@ export interface Question {
 
 // Public-facing question response (hidden fields stripped)
 // This is what the HTTP route returns
-export type PublicQuestion = Omit<Question, "hidden_marking_guide" | "model_answer">;
+// May include optional audit_warning flag if question passed second audit attempt
+export type PublicQuestion = Omit<Question, "hidden_marking_guide" | "model_answer"> & {
+  audit_warning?: boolean;
+};
 
 // Type error codes for QuestionResearcher
 export type QuestionResearcherErrorCode =
@@ -42,4 +45,23 @@ export class QuestionResearcherError extends Error {
 // Type guard for checking if an error is a QuestionResearcherError
 export function isQuestionResearcherError(err: unknown): err is QuestionResearcherError {
   return err instanceof QuestionResearcherError;
+}
+
+// Audit result types
+export type AuditResult =
+  | { verdict: "APPROVED" }
+  | { verdict: "REVISION_NEEDED"; issues: string[] };
+
+// Type error codes for Auditor
+export type AuditorErrorCode = "audit_error";
+
+// Typed error thrown by auditor
+export class AuditorError extends Error {
+  constructor(
+    public readonly code: AuditorErrorCode,
+    message: string
+  ) {
+    super(message);
+    this.name = "AuditorError";
+  }
 }
