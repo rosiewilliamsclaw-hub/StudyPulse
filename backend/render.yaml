@@ -3,10 +3,12 @@ services:
     name: studypulse-backend
     runtime: node
     rootDir: backend
-    buildCommand: npm install && npm run build
+    buildCommand: cd ../frontend && npm install && npm run build && cd ../backend && npm install && npm run build
     startCommand: npm start
     envVars:
       - key: JWT_SECRET
+        sync: false  # Must be set manually in Render dashboard
+      - key: ANTHROPIC_API_KEY
         sync: false  # Must be set manually in Render dashboard
       - key: NODE_ENV
         value: production
