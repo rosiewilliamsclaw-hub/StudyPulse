@@ -88,6 +88,7 @@ export default function DashboardPage() {
       const duration = 1200; // 1.2 seconds
       const start = 20;
       const end = predictedScore.estimate;
+      let rafHandle: number;
 
       const animateCountUp = (currentTime: number) => {
         const elapsed = currentTime - startTime;
@@ -96,11 +97,14 @@ export default function DashboardPage() {
         setAnimatedPredictedScore(current);
 
         if (progress < 1) {
-          requestAnimationFrame(animateCountUp);
+          rafHandle = requestAnimationFrame(animateCountUp);
         }
       };
 
-      requestAnimationFrame(animateCountUp);
+      rafHandle = requestAnimationFrame(animateCountUp);
+
+      // Cleanup: cancel animation if component unmounts before completion
+      return () => cancelAnimationFrame(rafHandle);
     }
   }, [predictedScore]);
 

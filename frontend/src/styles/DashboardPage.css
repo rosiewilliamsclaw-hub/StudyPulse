@@ -239,7 +239,8 @@
   margin-bottom: 10px;
 }
 
-.predicted-score-display {
+.predicted-score-display,
+.predicted-score-value {
   font-size: 3rem;
   font-weight: 700;
   margin: 15px 0;
@@ -462,7 +463,8 @@
     padding: 18px;
   }
 
-  .predicted-score-display {
+  .predicted-score-display,
+  .predicted-score-value {
     font-size: 2.2rem;
     min-height: 60px;
   }
