@@ -36,7 +36,7 @@ export async function updateScores(
   }
 
   // --- 2. Calculate performance ratio ---
-  const performanceRatio = maxMarks === 0 ? 0 : score / maxMarks;
+  const performanceRatio = maxMarks === 0 ? 0 : Math.min(score / maxMarks, 1.0);
 
   // --- 3. Determine starting confidence for this topic ---
   let existingConfidence: number;
