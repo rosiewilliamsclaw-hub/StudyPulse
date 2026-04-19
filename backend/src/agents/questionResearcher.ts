@@ -26,6 +26,17 @@ const PROMPTS_DIR = path.join(BACKEND_ROOT, "prompts");
 const QUESTION_RESEARCHER_PROMPT_PATH = path.join(PROMPTS_DIR, "question_researcher.txt");
 
 /**
+ * Maps study area names to specific default topics within those areas.
+ * Used when onboarding self-ratings are selected (which return study area names,
+ * not specific topics from the PDF study design).
+ */
+const STUDY_AREA_DEFAULT_TOPICS: Record<string, string> = {
+  "Interactions": "user interface design",
+  "Data and Information": "data validation",
+  "Programming": "object-oriented programming concepts",
+};
+
+/**
  * Ensures /data/questions/ directory exists.
  * Called on first question write.
  */
@@ -51,6 +62,8 @@ function toTopicSlug(topic: string): string {
 
 /**
  * Selects the topic with the lowest confidence score from confidence_map.
+ * If the selected topic is a study area name (matches a key in STUDY_AREA_DEFAULT_TOPICS),
+ * returns the mapped specific topic instead.
  * Returns null if confidence_map is empty.
  */
 function selectLowestConfidenceTopic(confidenceMap: Record<string, unknown>): string | null {
@@ -69,11 +82,22 @@ function selectLowestConfidenceTopic(confidenceMap: Record<string, unknown>): st
     }
   }
 
-  return lowestTopic || null;
+  if (!lowestTopic) {
+    return null;
+  }
+
+  // If the topic is a study area name, map it to a specific topic
+  if (lowestTopic in STUDY_AREA_DEFAULT_TOPICS) {
+    return STUDY_AREA_DEFAULT_TOPICS[lowestTopic];
+  }
+
+  return lowestTopic;
 }
 
 /**
  * Selects the study area with the lowest onboarding rating.
+ * If the selected area is a study area name (matches a key in STUDY_AREA_DEFAULT_TOPICS),
+ * returns the mapped specific topic instead.
  * Returns null if onboarding object is empty.
  */
 function selectLowestOnboardingTopic(onboarding: Record<string, unknown>): string | null {
@@ -92,7 +116,16 @@ function selectLowestOnboardingTopic(onboarding: Record<string, unknown>): strin
     }
   }
 
-  return lowestArea || null;
+  if (!lowestArea) {
+    return null;
+  }
+
+  // If the area is a study area name, map it to a specific topic
+  if (lowestArea in STUDY_AREA_DEFAULT_TOPICS) {
+    return STUDY_AREA_DEFAULT_TOPICS[lowestArea];
+  }
+
+  return lowestArea;
 }
 
 /**
