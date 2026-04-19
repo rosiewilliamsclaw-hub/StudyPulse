@@ -116,8 +116,9 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
     }
 
     // --- 5. Predict study score (best-effort) ---
+    let predictionResult;
     try {
-      await predictStudyScore(studentId);
+      predictionResult = await predictStudyScore(studentId);
     } catch (err) {
       if (isPredictorError(err)) {
         // Log but don't fail the request over prediction failure
@@ -133,7 +134,33 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
       }
     }
 
-    // --- 6. Return marking result ---
+    // --- 6. Append to score_history (best-effort) ---
+    if (predictionResult) {
+      try {
+        const student = readStudent(studentId);
+        if (student) {
+          if (!Array.isArray(student.score_history)) {
+            student.score_history = [];
+          }
+          student.score_history.push({
+            estimate: predictionResult.estimate,
+            timestamp: new Date().toISOString(),
+          });
+          writeStudent(student);
+          console.log(
+            `[submitAnswer] Appended to score_history for ${studentId}: estimate=${predictionResult.estimate}`
+          );
+        }
+      } catch (err) {
+        // Log but don't fail the request over history append failure
+        console.error(
+          `[submitAnswer] Failed to append to score_history for ${studentId}:`,
+          err
+        );
+      }
+    }
+
+    // --- 7. Return marking result ---
     res.status(200).json(markingResult);
   } catch (err) {
     if (isMarkerError(err)) {

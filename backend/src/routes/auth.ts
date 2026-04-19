@@ -76,6 +76,7 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
       confidence_map: {},
       question_history: [],
       predicted_study_score: null,
+      score_history: [],
     };
 
     writeStudent(newStudent);

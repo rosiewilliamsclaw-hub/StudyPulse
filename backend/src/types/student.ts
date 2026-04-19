@@ -9,6 +9,11 @@ export interface StudentProfile {
   sac_date: string | null; // ISO date string or null
 }
 
+export interface ScoreHistoryEntry {
+  estimate: number;  // predicted study score
+  timestamp: string; // ISO timestamp
+}
+
 export interface StudentOnboarding {
   // Support both old placeholder names and new Applied Computing topic names
   "Study Area 1"?: number; // 1–5 (deprecated, placeholder)
@@ -33,6 +38,7 @@ export interface StudentFile {
   confidence_map: Record<string, unknown>;
   question_history: unknown[];
   predicted_study_score: StoredPrediction | null;
+  score_history: ScoreHistoryEntry[];
 }
 
 // Lightweight email index mapping email -> student_id

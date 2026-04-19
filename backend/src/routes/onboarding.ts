@@ -113,6 +113,7 @@ router.post("/", requireAuth, (req: Request, res: Response): void => {
       "Data and Information": study_area_ratings["Data and Information"],
       "Programming": study_area_ratings["Programming"],
     },
+    score_history: [],  // Initialize empty score history
   };
 
   try {
