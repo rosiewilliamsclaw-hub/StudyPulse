@@ -9,7 +9,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { submitOnboarding } from "../api/auth";
 
-const STUDY_AREAS = ["Study Area 1", "Study Area 2", "Study Area 3"] as const;
+const STUDY_AREAS = ["Interactions", "Data and Information", "Programming"] as const;
 type StudyArea = (typeof STUDY_AREAS)[number];
 
 // Build today's date string in YYYY-MM-DD for the date input min attribute

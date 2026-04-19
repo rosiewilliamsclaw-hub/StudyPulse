@@ -10,7 +10,7 @@ import { readStudent, writeStudent } from "../utils/fileStore";
 const router = Router();
 
 const VALID_UNITS = ["Unit 3", "Unit 4"];
-const STUDY_AREAS = ["Study Area 1", "Study Area 2", "Study Area 3"];
+const STUDY_AREAS = ["Interactions", "Data and Information", "Programming"];
 
 /**
  * Validates that a SAC date string is:
@@ -109,9 +109,9 @@ router.post("/", requireAuth, (req: Request, res: Response): void => {
       sac_date: resolvedSacDate,
     },
     onboarding: {
-      "Study Area 1": study_area_ratings["Study Area 1"],
-      "Study Area 2": study_area_ratings["Study Area 2"],
-      "Study Area 3": study_area_ratings["Study Area 3"],
+      "Interactions": study_area_ratings["Interactions"],
+      "Data and Information": study_area_ratings["Data and Information"],
+      "Programming": study_area_ratings["Programming"],
     },
   };
 
