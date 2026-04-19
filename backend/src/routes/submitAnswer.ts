@@ -1,26 +1,21 @@
 // POST /api/v1/submit-answer
 //
-// Placeholder marker route — submits a student's answer for marking.
-// For now, returns a stub response indicating the marker is not yet built.
+// Marks a student's answer using the Marker agent and updates their question_history.
 // Protected: requires valid JWT cookie
 
 import { Router, Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 import { requireAuth } from "../middleware/authMiddleware";
+import { markResponse } from "../agents/marker";
+import { readStudent, writeStudent } from "../utils/fileStore";
+import { isMarkerError, type MarkingResult, type QuestionHistoryEntry } from "../types/marker";
 
 const router = Router();
 
 interface SubmitAnswerRequest {
   question_id?: string;
   student_response?: string;
-}
-
-interface SubmitAnswerResponse {
-  score: number;
-  max_score: number;
-  breakdown: string[];
-  model_answer: string;
 }
 
 /**
@@ -36,6 +31,7 @@ const QUESTIONS_DIR = path.join(BACKEND_ROOT, "data", "questions");
 // ---------------------------------------------------------------------------
 router.post("/", requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { question_id, student_response } = req.body as SubmitAnswerRequest;
+  const studentId = req.student!.student_id;
 
   // --- Validate required fields ---
   if (!question_id || typeof question_id !== "string" || !question_id.trim()) {
@@ -43,53 +39,87 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
     return;
   }
 
-  if (student_response === undefined || student_response === null) {
-    res.status(400).json({ error: "bad_request", message: "student_response is required." });
+  if (
+    !student_response ||
+    typeof student_response !== "string" ||
+    !student_response.trim()
+  ) {
+    res
+      .status(400)
+      .json({ error: "bad_request", message: "student_response cannot be empty." });
     return;
   }
 
   try {
-    // Read the question file to get max_score (marks)
-    const questionPath = path.join(QUESTIONS_DIR, `${question_id.trim()}.json`);
+    // --- 1. Mark the response ---
+    const markingResult = await markResponse(question_id.trim(), student_response.trim());
 
-    if (!fs.existsSync(questionPath)) {
-      console.error(`[submitAnswer] Question file not found: ${questionPath}`);
-      res.status(404).json({
-        error: "question_not_found",
-        message: `Question ${question_id} not found.`,
-      });
-      return;
-    }
-
-    let questionData;
+    // --- 2. Update student's question_history (best-effort) ---
     try {
-      const content = fs.readFileSync(questionPath, "utf-8");
-      questionData = JSON.parse(content);
+      const student = readStudent(studentId);
+      if (student) {
+        // Read question file to get the topic
+        const questionPath = path.join(QUESTIONS_DIR, `${question_id.trim()}.json`);
+        let topic = "unknown";
+        if (fs.existsSync(questionPath)) {
+          try {
+            const questionContent = fs.readFileSync(questionPath, "utf-8");
+            const questionData = JSON.parse(questionContent) as { topic?: string };
+            topic = questionData.topic || "unknown";
+          } catch (_) {
+            // If we can't read topic, use "unknown"
+          }
+        }
+
+        const historyEntry: QuestionHistoryEntry = {
+          question_id: question_id.trim(),
+          topic,
+          score: markingResult.score,
+          max: markingResult.max,
+          timestamp: new Date().toISOString(),
+        };
+
+        student.question_history.push(historyEntry);
+        writeStudent(student);
+        console.log(
+          `[submitAnswer] Updated question_history for student ${studentId}: added ${question_id}`
+        );
+      }
     } catch (err) {
-      console.error(`[submitAnswer] Failed to read/parse question file: ${questionPath}`, err);
-      res.status(500).json({
-        error: "internal_error",
-        message: "Could not read question data.",
-      });
-      return;
+      // Log but don't fail the request over history update failure
+      console.error(
+        `[submitAnswer] Failed to update question_history for student ${studentId}:`,
+        err
+      );
     }
 
-    const maxScore = questionData.marks ?? 0;
-
-    // --- Return placeholder response ---
-    // Marker not yet built — return stub with score = 0
-    const response: SubmitAnswerResponse = {
-      score: 0,
-      max_score: maxScore,
-      breakdown: ["Marker not yet built"],
-      model_answer: "",
-    };
-
-    console.log(
-      `[submitAnswer] Stub response for question ${question_id.trim()}: score 0/${maxScore}`
-    );
-    res.status(200).json(response);
+    // --- 3. Return marking result ---
+    res.status(200).json(markingResult);
   } catch (err) {
+    if (isMarkerError(err)) {
+      // Map typed error codes to appropriate HTTP status codes
+      switch (err.code) {
+        case "question_not_found":
+          res
+            .status(404)
+            .json({ error: err.code, message: err.message });
+          return;
+        case "parse_error":
+        case "claude_error":
+        case "missing_api_key":
+          res
+            .status(500)
+            .json({ error: err.code, message: err.message });
+          return;
+        default:
+          res
+            .status(500)
+            .json({ error: "internal_error", message: err.message });
+          return;
+      }
+    }
+
+    // Unexpected non-MarkerError
     const detail = err instanceof Error ? err.message : String(err);
     console.error("[submitAnswer] Unexpected error:", err);
     res.status(500).json({ error: "internal_error", message: detail });

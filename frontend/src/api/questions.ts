@@ -14,11 +14,18 @@ export interface PublicQuestion {
   audit_warning?: boolean;
 }
 
+export interface MarkBreakdown {
+  mark: number;
+  earned: boolean;
+  reason: string;
+}
+
 export interface SubmitAnswerResponse {
   score: number;
-  max_score: number;
-  breakdown: string[];
+  max: number;
+  breakdown: MarkBreakdown[];
   model_answer: string;
+  feedback_summary: string;
 }
 
 export interface ApiError {

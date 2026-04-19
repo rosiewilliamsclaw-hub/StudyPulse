@@ -179,18 +179,28 @@ export default function QuestionPage() {
           <div className="score-section">
             <span className="score-label">Score:</span>
             <span className="score-value">
-              {feedback.score} / {feedback.max_score} marks
+              {feedback.score} / {feedback.max} marks
             </span>
           </div>
 
           {feedback.breakdown && feedback.breakdown.length > 0 && (
             <div className="breakdown-section">
-              <h3>Feedback</h3>
+              <h3>Mark-by-mark feedback</h3>
               <ul>
-                {feedback.breakdown.map((item, idx) => (
-                  <li key={idx}>{item}</li>
+                {feedback.breakdown.map((item) => (
+                  <li key={item.mark} className={item.earned ? "earned" : "not-earned"}>
+                    <span className="mark-icon">{item.earned ? "✅" : "❌"}</span>
+                    <span className="mark-number">Mark {item.mark}:</span>
+                    <span className="mark-reason">{item.reason}</span>
+                  </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {feedback.feedback_summary && (
+            <div className="feedback-summary">
+              <p>{feedback.feedback_summary}</p>
             </div>
           )}
 

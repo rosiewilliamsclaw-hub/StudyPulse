@@ -8,9 +8,14 @@ export interface StudentProfile {
 }
 
 export interface StudentOnboarding {
-  "Study Area 1": number; // 1–5
-  "Study Area 2": number; // 1–5
-  "Study Area 3": number; // 1–5
+  // Support both old placeholder names and new Applied Computing topic names
+  "Study Area 1"?: number; // 1–5 (deprecated, placeholder)
+  "Study Area 2"?: number; // 1–5 (deprecated, placeholder)
+  "Study Area 3"?: number; // 1–5 (deprecated, placeholder)
+  "Interactions"?: number; // 1–5 (Applied Computing topic)
+  "Data and Information"?: number; // 1–5 (Applied Computing topic)
+  "Programming"?: number; // 1–5 (Applied Computing topic)
+  [key: string]: number | undefined; // Allow other topic names
 }
 
 // The full student file written to /data/students/{student_id}.json
