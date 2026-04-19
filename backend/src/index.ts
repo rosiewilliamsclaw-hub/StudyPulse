@@ -53,15 +53,6 @@ app.get("/api/v1/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
 });
 
-// Serve built React frontend
-const FRONTEND_BUILD = path.resolve(__dirname, "..", "..", "frontend", "dist");
-app.use(express.static(FRONTEND_BUILD));
-
-// SPA fallback — serve index.html for all non-API routes
-app.get("*", (_req, res) => {
-  res.sendFile(path.join(FRONTEND_BUILD, "index.html"));
-});
-
 app.listen(PORT, () => {
   console.log(`StudyPulse backend running on port ${PORT}`);
 });
