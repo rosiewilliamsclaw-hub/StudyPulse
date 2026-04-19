@@ -1,6 +1,8 @@
 // Shared TypeScript interface for the student data schema
 // All fields match the exact JSON structure specified in the Feature 1 spec
 
+import type { StoredPrediction } from "./predictor";
+
 export interface StudentProfile {
   subject: string;
   unit: string;
@@ -30,7 +32,7 @@ export interface StudentFile {
   onboarding: StudentOnboarding | Record<string, never>; // empty before onboarding
   confidence_map: Record<string, unknown>;
   question_history: unknown[];
-  predicted_study_score: number | null;
+  predicted_study_score: StoredPrediction | null;
 }
 
 // Lightweight email index mapping email -> student_id

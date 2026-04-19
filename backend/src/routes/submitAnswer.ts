@@ -9,9 +9,11 @@ import path from "path";
 import { requireAuth } from "../middleware/authMiddleware";
 import { markResponse } from "../agents/marker";
 import { updateScores } from "../agents/scorer";
+import { predictStudyScore } from "../agents/predictor";
 import { readStudent, writeStudent } from "../utils/fileStore";
 import { isMarkerError, type MarkingResult, type QuestionHistoryEntry } from "../types/marker";
 import { isScorerError } from "../types/scorer";
+import { isPredictorError } from "../types/predictor";
 
 const router = Router();
 
@@ -113,7 +115,25 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
       }
     }
 
-    // --- 5. Return marking result ---
+    // --- 5. Predict study score (best-effort) ---
+    try {
+      await predictStudyScore(studentId);
+    } catch (err) {
+      if (isPredictorError(err)) {
+        // Log but don't fail the request over prediction failure
+        console.error(
+          `[submitAnswer] Failed to predict score for student ${studentId}:`,
+          err.message
+        );
+      } else {
+        console.error(
+          `[submitAnswer] Unexpected error during prediction for student ${studentId}:`,
+          err
+        );
+      }
+    }
+
+    // --- 6. Return marking result ---
     res.status(200).json(markingResult);
   } catch (err) {
     if (isMarkerError(err)) {

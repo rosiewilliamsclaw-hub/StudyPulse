@@ -14,6 +14,7 @@ import generateQuestionRouter from "./routes/generateQuestion";
 import submitAnswerRouter from "./routes/submitAnswer";
 import dashboardDataRouter from "./routes/dashboardData";
 import heatmapDataRouter from "./routes/heatmapData";
+import predictedScoreRouter from "./routes/predictedScore";
 
 // Use __dirname to anchor .env path — process.cwd() is unreliable on Render
 // (resolves to repo root, not backend/ subdirectory)
@@ -51,6 +52,7 @@ app.use("/api/v1/generate-question", generateQuestionRouter);
 app.use("/api/v1/submit-answer", submitAnswerRouter);
 app.use("/api/v1/dashboard-data", dashboardDataRouter);
 app.use("/api/v1/heatmap-data", heatmapDataRouter);
+app.use("/api/v1/predicted-score", predictedScoreRouter);
 
 // Health check
 app.get("/api/v1/health", (_req, res) => {
