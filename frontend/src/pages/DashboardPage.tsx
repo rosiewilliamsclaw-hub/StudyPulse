@@ -12,14 +12,9 @@ import {
   fetchScoreHistory,
   PredictorResult,
   ScoreHistoryResponse,
+  DashboardData,
 } from "../api/questions";
 import "../styles/DashboardPage.css";
-
-interface DashboardData {
-  overall_score: number;
-  student_name: string;
-  questions_answered: number;
-}
 
 type PageState = "loading" | "loaded" | "error";
 
@@ -190,6 +185,10 @@ export default function DashboardPage() {
     navigate("/question");
   }
 
+  function handleViewTutorDashboard() {
+    navigate("/tutor");
+  }
+
   function handleTopicClick(topic: string) {
     navigate("/question", { state: { topic } });
   }
@@ -342,6 +341,11 @@ export default function DashboardPage() {
           <button onClick={handleStartPractising} className="btn-primary">
             Start practising
           </button>
+          {data.is_tutor && (
+            <button onClick={handleViewTutorDashboard} className="btn-tutor">
+              Tutor view →
+            </button>
+          )}
           <a href="#" onClick={handleViewTopicBreakdown} className="btn-link">
             View your topic breakdown
           </a>

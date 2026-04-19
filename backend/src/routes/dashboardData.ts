@@ -13,6 +13,7 @@ interface DashboardDataResponse {
   overall_score: number; // 0–100 integer
   student_name: string;  // student email
   questions_answered: number;
+  is_tutor: boolean;     // true if logged-in user is the tutor
 }
 
 // ---------------------------------------------------------------------------
@@ -50,12 +51,17 @@ router.get("/", requireAuth, (req: Request, res: Response): void => {
     // Clamp to [0, 100]
     overallScore = Math.max(0, Math.min(overallScore, 100));
 
+    // Check if user is the tutor
+    const tutorEmail = process.env.TUTOR_EMAIL?.toLowerCase();
+    const isTutor = tutorEmail ? student.email.toLowerCase() === tutorEmail : false;
+
     const response: DashboardDataResponse = {
       overall_score: overallScore,
       student_name: student.email,
       questions_answered: Array.isArray(student.question_history)
         ? student.question_history.length
         : 0,
+      is_tutor: isTutor,
     };
 
     console.log(

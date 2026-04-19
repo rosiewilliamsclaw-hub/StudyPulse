@@ -8,6 +8,7 @@ import LoginPage from "./pages/LoginPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/DashboardPage";
 import QuestionPage from "./pages/QuestionPage";
+import TutorPage from "./pages/TutorPage";
 
 export default function App() {
   return (
@@ -40,6 +41,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <QuestionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tutor"
+            element={
+              <ProtectedRoute>
+                <TutorPage />
               </ProtectedRoute>
             }
           />

@@ -114,6 +114,26 @@
   color: #0052a3;
 }
 
+.btn-tutor {
+  padding: 12px 24px;
+  background-color: #639922;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-tutor:hover {
+  background-color: #527a1a;
+}
+
+.btn-tutor:active {
+  background-color: #3f5d15;
+}
+
 .loading-state {
   display: flex;
   align-items: center;

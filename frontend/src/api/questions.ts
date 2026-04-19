@@ -64,6 +64,28 @@ export interface ApiError {
   message?: string;
 }
 
+export interface DashboardData {
+  overall_score: number;
+  student_name: string;
+  questions_answered: number;
+  is_tutor?: boolean;
+}
+
+export interface TutorStudentData {
+  email: string;
+  subject_and_unit: string;
+  overall_score: number;
+  predicted_score: number | null;
+  weakest_topic: string | null;
+  questions_answered: number;
+  last_active: string; // ISO 8601 timestamp
+  three_weakest_topics: string[];
+}
+
+export interface TutorDataResponse {
+  students: TutorStudentData[];
+}
+
 /**
  * Fetch a new practice question for the student.
  * topic: null means auto-select the student's weakest topic.
@@ -149,4 +171,25 @@ export async function fetchScoreHistory(): Promise<ScoreHistoryResponse> {
   }
 
   return res.json() as Promise<ScoreHistoryResponse>;
+}
+
+/**
+ * Fetch tutor data: list of students and their progress.
+ * Returns 403 if user is not a tutor.
+ */
+export async function fetchTutorData(): Promise<TutorDataResponse> {
+  const res = await fetch(`${BASE}/tutor-data`, {
+    credentials: "include",
+  });
+
+  if (res.status === 403) {
+    throw new Error("Access denied: only tutors can view this page.");
+  }
+
+  if (!res.ok) {
+    const data: ApiError = await res.json().catch(() => ({}));
+    throw new Error(data.message ?? data.error ?? "Failed to load tutor data.");
+  }
+
+  return res.json() as Promise<TutorDataResponse>;
 }
