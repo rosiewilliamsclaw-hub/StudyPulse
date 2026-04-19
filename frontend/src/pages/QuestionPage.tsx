@@ -2,7 +2,7 @@
 // Displays a question, collects answer, shows feedback
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { generateQuestion, submitAnswer } from "../api/questions";
 import type { PublicQuestion, SubmitAnswerResponse } from "../api/questions";
@@ -12,6 +12,7 @@ type PageState = "loading" | "question" | "submitted" | "error";
 
 export default function QuestionPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [state, setPageState] = useState<PageState>("loading");
   const [question, setQuestion] = useState<PublicQuestion | null>(null);
@@ -24,10 +25,13 @@ export default function QuestionPage() {
   // Load a new question on mount and when fetching new questions
   useEffect(() => {
     if (!user) return;
-    fetchNewQuestion();
-  }, [user]);
+    
+    // Check if a specific topic was passed from the heatmap
+    const passedTopic = (location.state as { topic?: string })?.topic || null;
+    fetchNewQuestion(passedTopic);
+  }, [user, location.state]);
 
-  async function fetchNewQuestion() {
+  async function fetchNewQuestion(topic: string | null = null) {
     setPageState("loading");
     setResponse("");
     setFeedback(null);
@@ -35,7 +39,7 @@ export default function QuestionPage() {
     setShowModelAnswer(false);
 
     try {
-      const q = await generateQuestion(user!.student_id, null);
+      const q = await generateQuestion(user!.student_id, topic);
       setQuestion(q);
       setPageState("question");
     } catch (err) {
@@ -69,7 +73,7 @@ export default function QuestionPage() {
   }
 
   function handleSkip() {
-    fetchNewQuestion();
+    fetchNewQuestion(null);
   }
 
   function handleNextQuestion() {
@@ -105,7 +109,7 @@ export default function QuestionPage() {
       <div className="page-container">
         <div className="error-box">
           <p>{errorMessage}</p>
-          <button onClick={fetchNewQuestion} className="btn-primary">
+          <button onClick={() => fetchNewQuestion(null)} className="btn-primary">
             Try again
           </button>
         </div>

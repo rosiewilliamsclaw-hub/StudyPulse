@@ -137,6 +137,131 @@
   font-size: 0.95rem;
 }
 
+/* Heatmap section */
+#topic-heatmap {
+  scroll-behavior: smooth;
+}
+
+.heatmap-section {
+  margin-top: 50px;
+  padding-top: 30px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.heatmap-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 25px;
+}
+
+.heatmap-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.study-area-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.study-area-heading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.topic-tiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.topic-tile {
+  padding: 15px;
+  border-radius: 6px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  user-select: none;
+}
+
+.topic-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.topic-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-width: 100%;
+}
+
+.topic-confidence {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* Tile colour variants */
+.topic-tile.not-attempted {
+  background-color: #f1efe8;
+  color: #6b7280;
+}
+
+.topic-tile.low-confidence {
+  background-color: #fcebeb;
+  color: #a32d2d;
+}
+
+.topic-tile.medium-confidence {
+  background-color: #faeeda;
+  color: #633806;
+}
+
+.topic-tile.high-confidence {
+  background-color: #eaf3de;
+  color: #27500a;
+}
+
+.topic-tile.very-high-confidence {
+  background-color: #085041;
+  color: #ffffff;
+}
+
+.heatmap-loading,
+.heatmap-error {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.heatmap-error {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  border-radius: 6px;
+  color: #c33;
+}
+
+.heatmap-error button {
+  margin-top: 10px;
+}
+
 /* Mobile responsiveness */
 @media (max-width: 600px) {
   .dashboard-card {
@@ -168,5 +293,27 @@
   .btn-primary,
   .btn-link {
     width: 100%;
+  }
+
+  .heatmap-section {
+    margin-top: 35px;
+  }
+
+  .topic-tiles-grid {
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 10px;
+  }
+
+  .topic-tile {
+    min-height: 70px;
+    padding: 12px;
+  }
+
+  .topic-name {
+    font-size: 0.8rem;
+  }
+
+  .topic-confidence {
+    font-size: 0.85rem;
   }
 }

@@ -28,6 +28,21 @@ export interface SubmitAnswerResponse {
   feedback_summary: string;
 }
 
+export interface TopicTileData {
+  topic: string;
+  confidence: number | null;
+  attempted: boolean;
+}
+
+export interface StudyAreaData {
+  name: string;
+  topics: TopicTileData[];
+}
+
+export interface HeatmapDataResponse {
+  study_areas: StudyAreaData[];
+}
+
 export interface ApiError {
   error: string;
   message?: string;
@@ -76,4 +91,20 @@ export async function submitAnswer(
   }
 
   return res.json() as Promise<SubmitAnswerResponse>;
+}
+
+/**
+ * Fetch heatmap data (topic breakdown by study area).
+ */
+export async function fetchHeatmapData(): Promise<HeatmapDataResponse> {
+  const res = await fetch(`${BASE}/heatmap-data`, {
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const data: ApiError = await res.json().catch(() => ({}));
+    throw new Error(data.message ?? data.error ?? "Failed to load heatmap data.");
+  }
+
+  return res.json() as Promise<HeatmapDataResponse>;
 }
