@@ -2,6 +2,7 @@
 // Displays a question, collects answer, shows feedback
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { generateQuestion, submitAnswer } from "../api/questions";
 import type { PublicQuestion, SubmitAnswerResponse } from "../api/questions";
@@ -10,6 +11,7 @@ import "../styles/QuestionPage.css";
 type PageState = "loading" | "question" | "submitted" | "error";
 
 export default function QuestionPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [state, setPageState] = useState<PageState>("loading");
   const [question, setQuestion] = useState<PublicQuestion | null>(null);
@@ -71,7 +73,7 @@ export default function QuestionPage() {
   }
 
   function handleNextQuestion() {
-    fetchNewQuestion();
+    navigate("/dashboard");
   }
 
   function getResponseFormatHint(format: string): string {

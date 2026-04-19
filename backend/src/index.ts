@@ -12,6 +12,7 @@ import onboardingRouter from "./routes/onboarding";
 import extractStudyDesignRouter from "./routes/extractStudyDesign";
 import generateQuestionRouter from "./routes/generateQuestion";
 import submitAnswerRouter from "./routes/submitAnswer";
+import dashboardDataRouter from "./routes/dashboardData";
 
 // Use __dirname to anchor .env path — process.cwd() is unreliable on Render
 // (resolves to repo root, not backend/ subdirectory)
@@ -47,6 +48,7 @@ app.use("/api/v1/onboarding", onboardingRouter);
 app.use("/api/v1/extract-study-design", extractStudyDesignRouter);
 app.use("/api/v1/generate-question", generateQuestionRouter);
 app.use("/api/v1/submit-answer", submitAnswerRouter);
+app.use("/api/v1/dashboard-data", dashboardDataRouter);
 
 // Health check
 app.get("/api/v1/health", (_req, res) => {
