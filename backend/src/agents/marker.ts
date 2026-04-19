@@ -133,20 +133,22 @@ Mark this response strictly according to the marking guide.`;
   }
 
   // --- 6. Validate and normalise result ---
-  const score = Math.max(0, Math.min(claudeData.score, marks)); // Cap between 0 and marks
+  const rawScore = parseInt(String(claudeData.score), 10);
+  const score = Math.max(0, Math.min(isNaN(rawScore) ? 0 : rawScore, marks)); // Cap between 0 and marks, default 0 if non-numeric
   const max = marks;
 
   // Log if breakdown count doesn't match marks
-  if (claudeData.breakdown.length !== marks) {
+  const breakdown = Array.isArray(claudeData.breakdown) ? claudeData.breakdown : [];
+  if (breakdown.length !== marks) {
     console.warn(
-      `[marker] Breakdown count (${claudeData.breakdown.length}) doesn't match marks (${marks}) for question ${questionId}`
+      `[marker] Breakdown count (${breakdown.length}) doesn't match marks (${marks}) for question ${questionId}`
     );
   }
 
   const result: MarkingResult = {
     score,
     max,
-    breakdown: claudeData.breakdown,
+    breakdown,
     model_answer: claudeData.model_answer || "",
     feedback_summary: claudeData.feedback_summary || "",
   };
