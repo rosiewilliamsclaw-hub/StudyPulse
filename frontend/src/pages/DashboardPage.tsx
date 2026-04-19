@@ -1,7 +1,7 @@
 // Dashboard page — shows student's overall knowledge score and progress
 // Displays an animated circular progress ring with the overall score percentage
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/DashboardPage.css";
@@ -20,12 +20,28 @@ export default function DashboardPage() {
   const [state, setPageState] = useState<PageState>("loading");
   const [data, setData] = useState<DashboardData | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [animatedOffset, setAnimatedOffset] = useState<number | null>(null);
+  const circumferenceRef = useRef(2 * Math.PI * 90);
 
   // Load dashboard data on mount
   useEffect(() => {
     if (!user) return;
     fetchDashboardData();
   }, [user]);
+
+  // Trigger arc animation after data loads — two rAF frames ensure browser paints initial state first
+  useEffect(() => {
+    if (state === "loaded" && data !== null) {
+      const circumference = circumferenceRef.current;
+      const targetOffset = circumference * (1 - data.overall_score / 100);
+      setAnimatedOffset(circumference); // reset to hidden first
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimatedOffset(targetOffset);
+        });
+      });
+    }
+  }, [state, data]);
 
   async function fetchDashboardData() {
     setPageState("loading");
@@ -97,8 +113,8 @@ export default function DashboardPage() {
 
   const score = data.overall_score;
   const scoreColour = getScoreColour(score);
-  const circumference = 2 * Math.PI * 90; // radius = 90
-  const strokeDashoffset = circumference * (1 - score / 100);
+  const circumference = circumferenceRef.current;
+  const strokeDashoffset = animatedOffset ?? circumference; // use animated value; default to hidden before animation starts
 
   return (
     <div className="page-container dashboard-container">
@@ -135,9 +151,8 @@ export default function DashboardPage() {
               stroke={scoreColour}
               strokeWidth="8"
               strokeDasharray={circumference}
-              strokeDashoffset={circumference}
+              strokeDashoffset={strokeDashoffset}
               style={{
-                strokeDashoffset: strokeDashoffset,
                 transition: "stroke-dashoffset 1s ease-in-out",
               }}
               strokeLinecap="round"
