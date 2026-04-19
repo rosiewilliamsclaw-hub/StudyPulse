@@ -161,7 +161,7 @@ export default function TutorPage() {
                   {data.students.map((student) => (
                     <tr key={student.email}>
                       <td className="cell-email">{student.email}</td>
-                      <td className="cell-subject">{student.subject_and_unit}</td>
+                      <td className="cell-subject">{student.subject} — {student.unit}</td>
                       <td className="cell-score">
                         <span
                           className={`score-badge ${getScoreBadgeClass(
@@ -173,7 +173,7 @@ export default function TutorPage() {
                       </td>
                       <td className="cell-predicted">
                         {student.predicted_score !== null
-                          ? `${student.predicted_score}`
+                          ? `${student.predicted_score.estimate} (${student.predicted_score.low}–${student.predicted_score.high})`
                           : "—"}
                       </td>
                       <td className="cell-weakest">
@@ -183,7 +183,7 @@ export default function TutorPage() {
                         {student.questions_answered}
                       </td>
                       <td className="cell-last-active">
-                        {formatLastActive(student.last_active)}
+                        {student.last_active ? formatLastActive(student.last_active) : "—"}
                       </td>
                     </tr>
                   ))}

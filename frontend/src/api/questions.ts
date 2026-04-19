@@ -71,14 +71,23 @@ export interface DashboardData {
   is_tutor?: boolean;
 }
 
+export interface StoredPrediction {
+  estimate: number;
+  low: number;
+  high: number;
+  updated_at: string;
+}
+
 export interface TutorStudentData {
+  student_id: string;
   email: string;
-  subject_and_unit: string;
+  subject: string;
+  unit: string;
   overall_score: number;
-  predicted_score: number | null;
+  predicted_score: StoredPrediction | null;
   weakest_topic: string | null;
   questions_answered: number;
-  last_active: string; // ISO 8601 timestamp
+  last_active: string | null;
   three_weakest_topics: string[];
 }
 
