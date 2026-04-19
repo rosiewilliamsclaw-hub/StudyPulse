@@ -3,7 +3,7 @@ services:
     name: studypulse-backend
     runtime: node
     rootDir: backend
-    buildCommand: npm install && npx tsc --project tsconfig.json
+    buildCommand: npm install && (cd ../frontend && npm install && npm run build) && npx tsc --project tsconfig.json
     startCommand: npm start
     envVars:
       - key: JWT_SECRET
