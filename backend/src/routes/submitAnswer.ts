@@ -8,8 +8,10 @@ import fs from "fs";
 import path from "path";
 import { requireAuth } from "../middleware/authMiddleware";
 import { markResponse } from "../agents/marker";
+import { updateScores } from "../agents/scorer";
 import { readStudent, writeStudent } from "../utils/fileStore";
 import { isMarkerError, type MarkingResult, type QuestionHistoryEntry } from "../types/marker";
+import { isScorerError } from "../types/scorer";
 
 const router = Router();
 
@@ -54,23 +56,23 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
     // --- 1. Mark the response ---
     const markingResult = await markResponse(question_id.trim(), student_response.trim());
 
-    // --- 2. Update student's question_history (best-effort) ---
+    // --- 2. Read question file to get the topic (needed for history and scoring) ---
+    const questionPath = path.join(QUESTIONS_DIR, `${question_id.trim()}.json`);
+    let topic = "unknown";
+    if (fs.existsSync(questionPath)) {
+      try {
+        const questionContent = fs.readFileSync(questionPath, "utf-8");
+        const questionData = JSON.parse(questionContent) as { topic?: string };
+        topic = questionData.topic || "unknown";
+      } catch (_) {
+        // If we can't read topic, use "unknown"
+      }
+    }
+
+    // --- 3. Update student's question_history (best-effort) ---
     try {
       const student = readStudent(studentId);
       if (student) {
-        // Read question file to get the topic
-        const questionPath = path.join(QUESTIONS_DIR, `${question_id.trim()}.json`);
-        let topic = "unknown";
-        if (fs.existsSync(questionPath)) {
-          try {
-            const questionContent = fs.readFileSync(questionPath, "utf-8");
-            const questionData = JSON.parse(questionContent) as { topic?: string };
-            topic = questionData.topic || "unknown";
-          } catch (_) {
-            // If we can't read topic, use "unknown"
-          }
-        }
-
         const historyEntry: QuestionHistoryEntry = {
           question_id: question_id.trim(),
           topic,
@@ -93,7 +95,25 @@ router.post("/", requireAuth, async (req: Request, res: Response): Promise<void>
       );
     }
 
-    // --- 3. Return marking result ---
+    // --- 4. Update confidence scores (best-effort) ---
+    try {
+      await updateScores(studentId, topic, markingResult.score, markingResult.max);
+    } catch (err) {
+      if (isScorerError(err)) {
+        // Log but don't fail the request over scoring failure
+        console.error(
+          `[submitAnswer] Failed to update scores for student ${studentId}:`,
+          err.message
+        );
+      } else {
+        console.error(
+          `[submitAnswer] Unexpected error during scoring for student ${studentId}:`,
+          err
+        );
+      }
+    }
+
+    // --- 5. Return marking result ---
     res.status(200).json(markingResult);
   } catch (err) {
     if (isMarkerError(err)) {
