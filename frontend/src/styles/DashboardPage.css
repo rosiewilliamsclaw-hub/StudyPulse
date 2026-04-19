@@ -217,31 +217,7 @@
   font-weight: 600;
 }
 
-/* Tile colour variants */
-.topic-tile.not-attempted {
-  background-color: #f1efe8;
-  color: #6b7280;
-}
-
-.topic-tile.low-confidence {
-  background-color: #fcebeb;
-  color: #a32d2d;
-}
-
-.topic-tile.medium-confidence {
-  background-color: #faeeda;
-  color: #633806;
-}
-
-.topic-tile.high-confidence {
-  background-color: #eaf3de;
-  color: #27500a;
-}
-
-.topic-tile.very-high-confidence {
-  background-color: #085041;
-  color: #ffffff;
-}
+/* Tile colours applied via inline styles in DashboardPage.tsx (getTileColour / getTileTextColour) */
 
 .heatmap-loading,
 .heatmap-error {

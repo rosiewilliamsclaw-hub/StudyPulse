@@ -53,7 +53,10 @@ router.get("/", requireAuth, async (req: Request, res: Response): Promise<void> 
       const subject = student.profile.subject;
       const unitStr = student.profile.unit; // e.g. "Unit 3"
       const unitMatch = unitStr.match(/\d+/);
-      if (unitMatch) {
+      if (!unitMatch) {
+        throw new Error("Could not extract unit number from profile — using fallback");
+      }
+      {
         const unit = parseInt(unitMatch[0], 10);
         const extractResult = await extractStudyDesign(subject, unit, "all outcomes");
 
