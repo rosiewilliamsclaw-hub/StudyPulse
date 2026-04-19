@@ -43,6 +43,22 @@ export interface HeatmapDataResponse {
   study_areas: StudyAreaData[];
 }
 
+export interface PredictorResult {
+  estimate: number | null;
+  low?: number;
+  high?: number;
+  updated_at?: string;
+}
+
+export interface ScoreHistoryEntry {
+  estimate: number;
+  q_number: number;
+}
+
+export interface ScoreHistoryResponse {
+  history: ScoreHistoryEntry[];
+}
+
 export interface ApiError {
   error: string;
   message?: string;
@@ -107,4 +123,30 @@ export async function fetchHeatmapData(): Promise<HeatmapDataResponse> {
   }
 
   return res.json() as Promise<HeatmapDataResponse>;
+}
+
+export async function fetchPredictedScore(): Promise<PredictorResult> {
+  const res = await fetch(`${BASE}/predicted-score`, {
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const data: ApiError = await res.json().catch(() => ({}));
+    throw new Error(data.message ?? data.error ?? "Failed to load predicted score.");
+  }
+
+  return res.json() as Promise<PredictorResult>;
+}
+
+export async function fetchScoreHistory(): Promise<ScoreHistoryResponse> {
+  const res = await fetch(`${BASE}/score-history`, {
+    credentials: "include",
+  });
+
+  if (!res.ok) {
+    const data: ApiError = await res.json().catch(() => ({}));
+    throw new Error(data.message ?? data.error ?? "Failed to load score history.");
+  }
+
+  return res.json() as Promise<ScoreHistoryResponse>;
 }

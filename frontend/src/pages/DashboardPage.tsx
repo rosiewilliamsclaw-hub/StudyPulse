@@ -5,7 +5,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { fetchHeatmapData, HeatmapDataResponse } from "../api/questions";
+import {
+  fetchHeatmapData,
+  HeatmapDataResponse,
+  fetchPredictedScore,
+  fetchScoreHistory,
+  PredictorResult,
+  ScoreHistoryResponse,
+} from "../api/questions";
 import "../styles/DashboardPage.css";
 
 interface DashboardData {
@@ -26,6 +33,13 @@ export default function DashboardPage() {
   const [heatmapData, setHeatmapData] = useState<HeatmapDataResponse | null>(null);
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [heatmapError, setHeatmapError] = useState("");
+  const [predictedScore, setPredictedScore] = useState<PredictorResult | null>(null);
+  const [predictedScoreLoading, setPredictedScoreLoading] = useState(false);
+  const [predictedScoreError, setPredictedScoreError] = useState("");
+  const [scoreHistory, setScoreHistory] = useState<ScoreHistoryResponse | null>(null);
+  const [_scoreHistoryLoading, _setScoreHistoryLoading] = useState(false);
+  const [_scoreHistoryError, _setScoreHistoryError] = useState("");
+  const [animatedPredictedScore, setAnimatedPredictedScore] = useState<number>(20);
   const circumferenceRef = useRef(2 * Math.PI * 90);
   const heatmapSectionRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +55,18 @@ export default function DashboardPage() {
     fetchHeatmapDataAsync();
   }, [user]);
 
+  // Fetch predicted score independently
+  useEffect(() => {
+    if (!user) return;
+    fetchPredictedScoreAsync();
+  }, [user]);
+
+  // Fetch score history independently
+  useEffect(() => {
+    if (!user) return;
+    fetchScoreHistoryAsync();
+  }, [user]);
+
   // Trigger arc animation after data loads — two rAF frames ensure browser paints initial state first
   useEffect(() => {
     if (state === "loaded" && data !== null) {
@@ -54,6 +80,29 @@ export default function DashboardPage() {
       });
     }
   }, [state, data]);
+
+  // Trigger count-up animation for predicted score
+  useEffect(() => {
+    if (predictedScore && predictedScore.estimate !== null) {
+      const startTime = performance.now();
+      const duration = 1200; // 1.2 seconds
+      const start = 20;
+      const end = predictedScore.estimate;
+
+      const animateCountUp = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const current = Math.round(start + (end - start) * progress);
+        setAnimatedPredictedScore(current);
+
+        if (progress < 1) {
+          requestAnimationFrame(animateCountUp);
+        }
+      };
+
+      requestAnimationFrame(animateCountUp);
+    }
+  }, [predictedScore]);
 
   async function fetchDashboardData() {
     setPageState("loading");
@@ -101,6 +150,38 @@ export default function DashboardPage() {
     }
   }
 
+  async function fetchPredictedScoreAsync() {
+    setPredictedScoreLoading(true);
+    setPredictedScoreError("");
+
+    try {
+      const response = await fetchPredictedScore();
+      setPredictedScore(response);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load predicted score";
+      setPredictedScoreError(message);
+    } finally {
+      setPredictedScoreLoading(false);
+    }
+  }
+
+  async function fetchScoreHistoryAsync() {
+    _setScoreHistoryLoading(true);
+    _setScoreHistoryError("");
+
+    try {
+      const response = await fetchScoreHistory();
+      setScoreHistory(response);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load score history";
+      _setScoreHistoryError(message);
+    } finally {
+      _setScoreHistoryLoading(false);
+    }
+  }
+
   function handleStartPractising() {
     navigate("/question");
   }
@@ -132,6 +213,25 @@ export default function DashboardPage() {
     if (confidence === null) return "#333333";
     if (confidence >= 90) return "#FFFFFF"; // White text for dark background
     return "#333333";
+  }
+
+  function getPredictedScoreColour(score: number): string {
+    if (score >= 20 && score <= 29) return "#E24B4A"; // Red
+    if (score >= 30 && score <= 39) return "#EF9F27"; // Amber
+    if (score >= 40 && score <= 44) return "#639922"; // Green
+    if (score >= 45 && score <= 50) return "#085041"; // Deep green
+    return "#085041";
+  }
+
+  function scoreToY(score: number, chartTop: number, chartBottom: number): number {
+    const minScore = 20;
+    const maxScore = 50;
+    return chartBottom - ((score - minScore) / (maxScore - minScore)) * (chartBottom - chartTop);
+  }
+
+  function qToX(q: number, maxQ: number, chartLeft: number, chartRight: number): number {
+    if (maxQ <= 1) return chartLeft;
+    return chartLeft + (q / maxQ) * (chartRight - chartLeft);
   }
 
   // Render based on page state
@@ -241,6 +341,173 @@ export default function DashboardPage() {
           <a href="#" onClick={handleViewTopicBreakdown} className="btn-link">
             View your topic breakdown
           </a>
+        </div>
+
+        {/* Predicted Score Section */}
+        <div className="predicted-score-section">
+          {predictedScoreError && (
+            <div className="predicted-score-error">
+              <p>{predictedScoreError}</p>
+            </div>
+          )}
+
+          {predictedScoreLoading && (
+            <div className="predicted-score-loading">
+              <p>Loading predicted score...</p>
+            </div>
+          )}
+
+          {predictedScore && predictedScore.estimate === null && (
+            <div className="predicted-score-empty">
+              <p className="predicted-score-placeholder">
+                Answer questions to unlock your predicted score
+              </p>
+            </div>
+          )}
+
+          {predictedScore && predictedScore.estimate !== null && (
+            <div className="predicted-score-container">
+              <p className="predicted-score-label">Predicted Study Score</p>
+              <div
+                className="predicted-score-value"
+                style={{
+                  color: getPredictedScoreColour(predictedScore.estimate),
+                }}
+              >
+                {animatedPredictedScore}
+              </div>
+              {predictedScore.low !== undefined && predictedScore.high !== undefined && (
+                <p className="predicted-score-range">
+                  Range: {predictedScore.low}–{predictedScore.high}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Score History Chart */}
+          {scoreHistory && scoreHistory.history && scoreHistory.history.length > 0 && (
+            <div className="score-history-chart-section">
+              {scoreHistory.history.length < 2 ? (
+                <p className="score-history-empty">
+                  Complete more questions to see your score trajectory
+                </p>
+              ) : (
+                <svg
+                  className="score-history-chart"
+                  viewBox="0 0 500 180"
+                  width="100%"
+                >
+                  {/* Chart padding constants */}
+                  {/* left: 40, right: 20, top: 20, bottom: 30 */}
+                  {/* Chart area: (40, 20) to (480, 150) */}
+
+                  {/* Y-axis dashed line at y=30 (Pass) */}
+                  <line
+                    x1="40"
+                    y1={scoreToY(30, 20, 150)}
+                    x2="480"
+                    y2={scoreToY(30, 20, 150)}
+                    stroke="#CCCCCC"
+                    strokeWidth="1"
+                    strokeDasharray="4,4"
+                  />
+                  <text
+                    x="35"
+                    y={scoreToY(30, 20, 150) + 4}
+                    fontSize="12"
+                    textAnchor="end"
+                    fill="#666666"
+                  >
+                    Pass
+                  </text>
+
+                  {/* Y-axis dashed line at y=40 (Strong) */}
+                  <line
+                    x1="40"
+                    y1={scoreToY(40, 20, 150)}
+                    x2="480"
+                    y2={scoreToY(40, 20, 150)}
+                    stroke="#CCCCCC"
+                    strokeWidth="1"
+                    strokeDasharray="4,4"
+                  />
+                  <text
+                    x="35"
+                    y={scoreToY(40, 20, 150) + 4}
+                    fontSize="12"
+                    textAnchor="end"
+                    fill="#666666"
+                  >
+                    Strong
+                  </text>
+
+                  {/* Y-axis labels (20, 30, 40, 50) */}
+                  <text x="35" y={scoreToY(20, 20, 150) + 4} fontSize="12" textAnchor="end" fill="#666666">
+                    20
+                  </text>
+                  <text x="35" y={scoreToY(50, 20, 150) + 4} fontSize="12" textAnchor="end" fill="#666666">
+                    50
+                  </text>
+
+                  {/* X-axis line */}
+                  <line x1="40" y1="150" x2="480" y2="150" stroke="#333333" strokeWidth="1" />
+
+                  {/* Polyline connecting score points */}
+                  <polyline
+                    points={scoreHistory.history
+                      .map((entry) => {
+                        const x = qToX(entry.q_number, scoreHistory.history[scoreHistory.history.length - 1].q_number, 40, 480);
+                        const y = scoreToY(entry.estimate, 20, 150);
+                        return `${x},${y}`;
+                      })
+                      .join(" ")}
+                    fill="none"
+                    stroke="#085041"
+                    strokeWidth="2"
+                  />
+
+                  {/* Circles at each point */}
+                  {scoreHistory.history.map((entry) => {
+                    const x = qToX(entry.q_number, scoreHistory.history[scoreHistory.history.length - 1].q_number, 40, 480);
+                    const y = scoreToY(entry.estimate, 20, 150);
+                    return (
+                      <circle
+                        key={`circle-${entry.q_number}`}
+                        cx={x}
+                        cy={y}
+                        r="3"
+                        fill="#085041"
+                      />
+                    );
+                  })}
+
+                  {/* X-axis labels (first and last q_number) */}
+                  {scoreHistory.history.length > 0 && (
+                    <>
+                      <text
+                        x={qToX(scoreHistory.history[0].q_number, scoreHistory.history[scoreHistory.history.length - 1].q_number, 40, 480)}
+                        y="165"
+                        fontSize="12"
+                        textAnchor="middle"
+                        fill="#666666"
+                      >
+                        Q{scoreHistory.history[0].q_number}
+                      </text>
+                      <text
+                        x={qToX(scoreHistory.history[scoreHistory.history.length - 1].q_number, scoreHistory.history[scoreHistory.history.length - 1].q_number, 40, 480)}
+                        y="165"
+                        fontSize="12"
+                        textAnchor="middle"
+                        fill="#666666"
+                      >
+                        Q{scoreHistory.history[scoreHistory.history.length - 1].q_number}
+                      </text>
+                    </>
+                  )}
+                </svg>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Heatmap section */}
